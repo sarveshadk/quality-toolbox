@@ -1,0 +1,2 @@
+[console_scripts]
+qc-toolbox = qc_toolbox.cli:cli

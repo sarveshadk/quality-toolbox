@@ -1,0 +1,220 @@
+Metadata-Version: 2.4
+Name: qc-toolbox
+Version: 1.0.0
+Summary: Quality Check Toolbox for Arterial Spin Labeling (ASL) MRI data
+Home-page: https://github.com/OSIPI/qc-toolbox
+Author: OSIPI — Open Science Initiative for Perfusion Imaging
+Author-email: osipi@ismrm.org
+License: Apache-2.0
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: nibabel>=4.0.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: scikit-learn>=1.3.0
+Requires-Dist: scikit-image>=0.21.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: plotly>=5.15.0
+Requires-Dist: streamlit>=1.28.0
+Requires-Dist: click>=8.1.0
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: dipy>=1.7.0
+Requires-Dist: nilearn>=0.10.0
+Requires-Dist: seaborn>=0.12.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# QC Toolbox — ASL MRI Quality Control
+
+[![CI](https://github.com/OSIPI/qc-toolbox/actions/workflows/ci.yml/badge.svg)](https://github.com/OSIPI/qc-toolbox/actions)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+
+A comprehensive quality control toolbox for **Arterial Spin Labeling (ASL) MRI** data, developed as part of **GSoC 2026** under [OSIPI](https://www.osipi.org/) (Open Science Initiative for Perfusion Imaging).
+
+---
+
+## Scientific Background
+
+ASL MRI magnetically labels water in arterial blood to measure **cerebral blood flow (CBF)** non-invasively. CBF maps are prone to multiple artifacts:
+
+| Artifact | Cause |
+|---|---|
+| Motion corruption | Head movement during acquisition |
+| Low SNR | ~1% signal change from labeled blood |
+| Incomplete labeling | RF coil inhomogeneity |
+| Negative CBF | Subtraction errors or pattern inversion |
+
+The **Quality Exclusion Index (QEI)** from Dolui et al. (JMRI 2024) is the core metric:
+
+```
+QEI = ∛( (1 − exp(α · PSS^β)) · exp(−(γ · DI^δ + ε · nGMCBF^ζ)) )
+```
+
+With coefficients: α=−3.0126, β=2.4419, γ=0.054, δ=0.9272, ε=2.8478, ζ=0.5196.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/OSIPI/qc-toolbox.git
+cd qc-toolbox
+pip install -e ".[dev]"
+```
+
+### Requirements
+
+- Python ≥ 3.9
+- nibabel, numpy, scipy, scikit-learn, scikit-image, pandas, matplotlib, plotly, streamlit, click, tqdm, dipy, nilearn, seaborn
+
+---
+
+## Quick Start
+
+### CLI Usage
+
+```bash
+# Run full QC pipeline
+qc-toolbox run --bids /path/to/bids --output /path/to/output
+
+# Use a specific threshold profile
+qc-toolbox run --bids /path/to/bids --output ./output --profile pediatric
+
+# Validate BIDS structure
+qc-toolbox validate-bids --bids /path/to/bids
+
+# Generate reports from results
+qc-toolbox report --results ./output/qc_results.csv --output ./reports --format all
+
+# Learn thresholds from your data
+qc-toolbox learn-thresholds --results ./output/qc_results.csv --output ./thresholds.json
+
+# Launch interactive dashboard
+qc-toolbox dashboard --results ./output/qc_results.csv
+```
+
+### Python API
+
+```python
+from qc_toolbox.pipeline import QCPipeline
+
+pipeline = QCPipeline(
+    bids_dir="/path/to/bids",
+    output_dir="/path/to/output",
+    threshold_profile="default",
+    n_workers=4,
+)
+results_df = pipeline.run()
+print(results_df[["subject_id", "qei", "overall_flag"]])
+```
+
+### Individual Metrics
+
+```python
+from qc_toolbox.metrics.qei import QEIMetric
+from qc_toolbox.core.tissue_masks import TissueMaskDeriver
+
+# Derive masks
+deriver = TissueMaskDeriver()
+masks = deriver.derive(cbf_map, affine)
+
+# Compute QEI
+qei = QEIMetric()
+result = qei.compute(cbf_map, masks.gm_prob, masks.wm_prob, affine)
+print(f"QEI: {result.qei_score:.3f} — {'PASS' if result.pass_flag else 'FAIL'}")
+```
+
+---
+
+## Metrics
+
+| Metric | Module | Description | Pass Threshold |
+|---|---|---|---|
+| **QEI** | `metrics.qei` | Quality Exclusion Index (Dolui 2024) | ≥ 0.70 |
+| **Motion** | `metrics.motion` | Framewise displacement & DVARS | Mean FD ≤ 0.5 mm |
+| **Control-Label** | `metrics.control_label` | Pattern validation & inversion detection | Valid + not inverted |
+| **M0** | `metrics.m0_checker` | M0 signal range, saturation, dropout | All checks pass |
+| **SNR** | `metrics.snr` | Temporal, spatial, ROI SNR | tSNR ≥ 10 |
+| **Histogram** | `metrics.histogram` | CBF distribution analysis | Mean GM CBF ∈ [10, 120] |
+| **Tissue Mask QA** | `metrics.tissue_mask_qa` | Coverage, components, symmetry | All checks pass |
+| **Spatial CoV** | `metrics.spatial_cov` | Coefficient of variation | ≤ 80% |
+
+---
+
+## Threshold Profiles
+
+| Profile | Population | File |
+|---|---|---|
+| `default` | Healthy adults | `thresholds/profiles/default.json` |
+| `pediatric` | Children (higher CBF) | `thresholds/profiles/pediatric.json` |
+| `elderly` | Older adults (lower CBF) | `thresholds/profiles/elderly.json` |
+
+Custom profiles can be learned from your data with `qc-toolbox learn-thresholds`.
+
+---
+
+## Dashboard
+
+Launch the interactive Streamlit dashboard:
+
+```bash
+qc-toolbox dashboard --results qc_results.csv --port 8501
+```
+
+Pages: **Run QC** · **Subject Viewer** · **Population Overview** · **Threshold Editor** · **Site Comparison** · **Export**
+
+---
+
+## Testing
+
+```bash
+pytest tests/ -v --tb=short --cov=qc_toolbox
+```
+
+Tests use synthetic NIfTI generators (`tests/synthetic/generators.py`) that produce controlled-quality data for deterministic assertions.
+
+---
+
+## Citation
+
+If you use this toolbox, please cite:
+
+> Dolui S, et al. (2024). Structural Similarity-based Quality Exclusion Index for Arterial Spin Labeling MRI. *Journal of Magnetic Resonance Imaging*. doi:[10.1002/jmri.29308](https://doi.org/10.1002/jmri.29308)
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Write tests for new functionality
+4. Ensure `pytest` passes with ≥ 80% coverage
+5. Submit a pull request
+
+---
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) for details.
