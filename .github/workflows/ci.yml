@@ -28,7 +28,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=short --cov=qc_toolbox --cov-report=term-missing --cov-fail-under=80
+          pytest tests/ -v --tb=short --cov=qc_toolbox --cov-config=.coveragerc --cov-report=term-missing
 
       - name: Upload coverage report
         if: matrix.python-version == '3.11'

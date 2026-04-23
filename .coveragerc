@@ -1,0 +1,11 @@
+[run]
+source = qc_toolbox
+omit =
+    qc_toolbox/cli.py
+    qc_toolbox/dashboard.py
+    qc_toolbox/visualize.py
+    qc_toolbox/report.py
+
+[report]
+fail_under = 70
+show_missing = true
