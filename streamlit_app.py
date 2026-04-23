@@ -59,7 +59,17 @@ st.markdown(f"""
         color: #374151;
     }}
 
-    .block-container {{ padding-top: 1.2rem; }}
+    /* Push content below the fixed Streamlit header/navbar */
+    .block-container {{ padding-top: 2.5rem; }}
+
+    /* Ensure the top toolbar doesn't overlay content */
+    header[data-testid="stHeader"] {{
+        background: {WHITE};
+        border-bottom: 1px solid #E8E8E8;
+    }}
+
+    /* Hide the default deploy button */
+    .stDeployButton {{ display: none; }}
 
     .page-header {{
         border-bottom: 2px solid {NAVY};
