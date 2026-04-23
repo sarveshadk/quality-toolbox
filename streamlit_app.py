@@ -231,9 +231,32 @@ def demo_data() -> pd.DataFrame:
     })
 
 
+def prepare_df(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+    if "overall_flag" not in df.columns:
+        if "qei" in df.columns:
+            df["overall_flag"] = np.where(
+                df["qei"] >= 0.70, "PASS",
+                np.where(df["qei"] >= 0.50, "WARN", "FAIL")
+            )
+        else:
+            df["overall_flag"] = "WARN"
+    if "subject_id" not in df.columns:
+        if "subject" in df.columns:
+            df["subject_id"] = df["subject"]
+        else:
+            df["subject_id"] = [f"sub-{i:03d}" for i in range(1, len(df) + 1)]
+    return df
+
+
 def make_distribution_fig(df, metric_key, title, xlabel, threshold=None, thresh_label=None):
-    pass_vals = df.loc[df["overall_flag"] == "PASS", metric_key].dropna()
-    fail_vals = df.loc[df["overall_flag"].isin(["FAIL", "WARN"]), metric_key].dropna()
+    if "overall_flag" not in df.columns:
+        pass_vals = pd.Series(dtype=float)
+        fail_vals = df[metric_key].dropna() if metric_key in df.columns else pd.Series(dtype=float)
+    else:
+        pass_vals = df.loc[df["overall_flag"] == "PASS", metric_key].dropna()
+        fail_vals = df.loc[df["overall_flag"].isin(["FAIL", "WARN"]), metric_key].dropna()
 
     fig = go.Figure()
 
@@ -668,7 +691,7 @@ def main():
         st.markdown("---")
         up = st.file_uploader("Load results CSV", type=["csv"], key="csv_up")
         if up:
-            st.session_state.results_df = pd.read_csv(up, comment="#")
+            st.session_state.results_df = prepare_df(pd.read_csv(up, comment="#"))
             st.rerun()
 
         if not st.session_state.results_df.empty:
@@ -681,7 +704,7 @@ def main():
         st.markdown("---")
         st.markdown('<p style="font-size:0.6rem; color:#9CA3AF;">GSoC 2026 | OSIPI<br>Dolui, Mora | MIT License</p>', unsafe_allow_html=True)
 
-    df = st.session_state.results_df
+    df = prepare_df(st.session_state.results_df)
 
     if page == "Overview":
         page_overview(df)
