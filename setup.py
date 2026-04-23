@@ -21,7 +21,7 @@ setup(
     package_data={
         "qc_toolbox": ["thresholds/profiles/*.json"],
     },
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=[
         "nibabel>=4.0.0",
         "numpy>=1.24.0",
@@ -54,9 +54,9 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Medical Science Apps.",
     ],
 )
