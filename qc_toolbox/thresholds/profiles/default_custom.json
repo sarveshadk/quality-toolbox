@@ -1,0 +1,46 @@
+{
+  "name": "default",
+  "population": "healthy_adults",
+  "thresholds": {
+    "qei": {
+      "metric": "qei",
+      "threshold": 12.87,
+      "direction": "above",
+      "ci_lower": 0.65,
+      "ci_upper": 0.75,
+      "n_components_optimal": 2
+    },
+    "spatial_cov": {
+      "metric": "spatial_cov",
+      "threshold": 80.0,
+      "direction": "below",
+      "ci_lower": 70.0,
+      "ci_upper": 90.0,
+      "n_components_optimal": 2
+    },
+    "mean_gm_cbf": {
+      "metric": "mean_gm_cbf",
+      "threshold": 10.0,
+      "direction": "above",
+      "ci_lower": 8.0,
+      "ci_upper": 15.0,
+      "n_components_optimal": 2
+    },
+    "temporal_snr": {
+      "metric": "temporal_snr",
+      "threshold": 10.0,
+      "direction": "above",
+      "ci_lower": 7.0,
+      "ci_upper": 12.0,
+      "n_components_optimal": 2
+    },
+    "mean_fd": {
+      "metric": "mean_fd",
+      "threshold": 35.49,
+      "direction": "below",
+      "ci_lower": 0.4,
+      "ci_upper": 0.6,
+      "n_components_optimal": 2
+    }
+  }
+}
